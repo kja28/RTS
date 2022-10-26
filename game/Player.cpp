@@ -2762,11 +2762,10 @@ Chooses a spawn location and spawns the player
 void idPlayer::SpawnFromSpawnSpot( void ) {
 	idVec3		spawn_origin;
 	idAngles	spawn_angles;
+	spawn_origin = idVec3(11609.730469f, -7961.773926f, 500.0f);
+	spawn_angles = idAngles(0.0f, 0.0f, -20.0f);
 	
-	if( !SelectSpawnPoint( spawn_origin, spawn_angles ) ) {
-		forceRespawn = true;
-		return;
-	}
+
 	SpawnToPoint( spawn_origin, spawn_angles );
 }
 
@@ -2782,6 +2781,7 @@ when called here with spectating set to true, just place yourself and init
 ============
 */
 void idPlayer::SpawnToPoint( const idVec3 &spawn_origin, const idAngles &spawn_angles ) {
+
 	idVec3 spec_origin;
 
 	assert( !gameLocal.isClient );
@@ -2833,6 +2833,7 @@ void idPlayer::SpawnToPoint( const idVec3 &spawn_origin, const idAngles &spawn_a
 
 	// setup our initial view
 	if ( !spectating ) {
+
 		SetOrigin( spawn_origin );
 // RAVEN BEGIN
 // abahr: taking into account gravity
@@ -2845,24 +2846,7 @@ void idPlayer::SpawnToPoint( const idVec3 &spawn_origin, const idAngles &spawn_a
 		SetOrigin( spec_origin );
 	}
 
-	// if this is the first spawn of the map, we don't have a usercmd yet,
-	// so the delta angles won't be correct.  This will be fixed on the first think.
-	viewAngles = ang_zero;
-	SetDeltaViewAngles( ang_zero );
-	SetViewAngles( spawn_angles );
-	spawnAngles = spawn_angles;
-	spawnAnglesSet = false;
 
- 	legsForward = true;
-	legsYaw = 0.0f;
-	idealLegsYaw = 0.0f;
-	oldViewYaw = viewAngles.yaw;
-
-	if ( spectating ) {
-		Hide();
-	} else {
-		Show();
-	}
 
 	if ( gameLocal.isMultiplayer ) {
 		if ( !spectating ) {
