@@ -45,6 +45,9 @@ idCVar net_showPredictionError( "net_showPredictionError", "-1", CVAR_INTEGER | 
 bool g_ObjectiveSystemOpen = false;
 #endif
 
+// Mine: Used for resoucres
+int otres = gameLocal.time * 2;
+
 // distance between ladder rungs (actually is half that distance, but this sounds better)
 const int LADDER_RUNG_DISTANCE = 32;
 
@@ -1079,15 +1082,15 @@ idPlayer::idPlayer() {
 
 	alreadyDidTeamAnnouncerSound = false;
 
-	noclip					= false;
-	godmode					= false;
+	noclip					= true;
+	godmode					= true;
 	undying					= g_forceUndying.GetBool() ? !gameLocal.isMultiplayer : false;
 
 	spawnAnglesSet			= false;
-	spawnAngles				= ang_zero;
-	viewAngles				= ang_zero;
-	deltaViewAngles			= ang_zero;
-	cmdAngles				= ang_zero;
+	spawnAngles				= idAngles( 0.0f , 0.0f , 18.0f );
+	viewAngles				= idAngles(0.0f, 0.0f, 18.0f);
+	deltaViewAngles			= idAngles(00.0f, 0.0f, 18.0f);
+	cmdAngles				= idAngles(0.0f, 0.0f, 18.0f);
 
 	demoViewAngleTime		= 0;
 	demoViewAngles			= ang_zero;
@@ -1506,8 +1509,8 @@ void idPlayer::Init( void ) {
 
 	Hide();
 	
-	noclip					= false;
-	godmode					= false;
+	noclip					= true;
+	godmode					= true;
 	godmodeDamage			= 0;
 	undying					= g_forceUndying.GetBool() ? !gameLocal.isMultiplayer : false;
 
@@ -1602,8 +1605,6 @@ void idPlayer::Init( void ) {
 	gibsLaunched = false;
 	gibDir.Zero();
 
-	// set the gravity
-	physicsObj.SetGravity( gameLocal.GetCurrentGravity(this) );
 
 	// start out standing
 	SetEyeHeight( pm_normalviewheight.GetFloat() );
@@ -1846,16 +1847,7 @@ void idPlayer::Spawn( void ) {
 		spectating = true;
 	}
 
-	// set our collision model
-	physicsObj.SetSelf( this );
-	SetClipModel( );
-	physicsObj.SetMass( spawnArgs.GetFloat( "mass", "100" ) );
-	physicsObj.SetContents( CONTENTS_BODY | (use_combat_bbox?CONTENTS_SOLID:0) );
-	physicsObj.SetClipMask( MASK_PLAYERSOLID );
-	SetPhysics( &physicsObj );
-	InitAASLocation();
 	
-	skin = renderEntity.customSkin;
 
 	// only the local player needs guis
 	// for server netdemos that have no local player, we use demo_* guis in idGameLocal
@@ -2000,7 +1992,13 @@ void idPlayer::Spawn( void ) {
 		idealWeapon = SlotForWeapon( "weapon_blaster" ); 
 		Event_DisableWeapon();
 	} else {
-		hiddenWeapon = false;
+		//hiddenWeapon = false;
+		hiddenWeapon = true;
+		if (weapon) {
+			weapon->LowerWeapon();
+		}
+		idealWeapon = SlotForWeapon("weapon_blaster");
+		Event_DisableWeapon();
 	}
 	
 	if ( hud ) {
@@ -2846,22 +2844,15 @@ void idPlayer::SpawnToPoint( const idVec3 &spawn_origin, const idAngles &spawn_a
 	fl.noknockback = false;
 	// stop any ragdolls being used
 	StopRagdoll();
-	// set back the player physics
-	SetPhysics( &physicsObj );
-	physicsObj.SetClipModelAxis();
-	physicsObj.EnableClip();
-	if ( !spectating ) {
-		SetCombatContents( true );
-	}
 
-	physicsObj.SetLinearVelocity( vec3_origin );
+	
 
 	// setup our initial view
 	if ( !spectating ) {
 		SetOrigin( spawn_origin );
 // RAVEN BEGIN
 // abahr: taking into account gravity
-		SetAxis( spawn_angles.ToMat3() );
+		
 // RAVEN END
 	} else {
 		spec_origin = spawn_origin;
@@ -3518,7 +3509,7 @@ void idPlayer::UpdateHudStats( idUserInterface *_hud ) {
 	UpdateHudPowerUps( _hud );
 
 	if ( hud_showSpeed.GetBool() ) {
-		idVec3 velocity = physicsObj.GetLinearVelocity();
+		idVec3 velocity = idVec3(0,0,0);
 		velocity[2] = 0;
 		_hud->SetStateString("player_speed", va("%d ups", (int)velocity.Length()));
 	}
@@ -3998,13 +3989,13 @@ idPlayer::UpdateConditions
 */
 void idPlayer::UpdateConditions( void ) {
 	idVec3	velocity;
-	float	fallspeed;
+	float	fallspeed = 0.0;
 	float	forwardspeed;
 	float	sidespeed;
 
 	// minus the push velocity to avoid playing the walking animation and sounds when riding a mover
-	velocity = physicsObj.GetLinearVelocity() - physicsObj.GetPushedLinearVelocity();
-	fallspeed = velocity * physicsObj.GetGravityNormal();
+	velocity = idVec3(0, 0, 0);
+	
 
  	if ( influenceActive ) {
  		pfl.forward		= false;
@@ -7422,17 +7413,6 @@ void idPlayer::CrashLand( const idVec3 &oldOrigin, const idVec3 &oldVelocity ) {
 	pfl.softLanding = false;
 	pfl.hardLanding = false;
 
-	// if the player is not on the ground
-	if ( !physicsObj.HasGroundContacts() ) {
-		return;
-	}
-
-	gravityNormal = physicsObj.GetGravityNormal();
-
-	// if the player wasn't going down
-	if ( ( oldVelocity * -gravityNormal ) >= 0.0f ) {
-		return;
-	}
 
 	waterLevel = physicsObj.GetWaterLevel();
 
@@ -7456,13 +7436,12 @@ void idPlayer::CrashLand( const idVec3 &oldOrigin, const idVec3 &oldVelocity ) {
 		return;
 	}
 
-	origin = GetPhysics()->GetOrigin();
-	gravityVector = physicsObj.GetGravity();
+
 
 	// calculate the exact velocity on landing
-	dist = ( origin - oldOrigin ) * -gravityNormal;
-	vel = oldVelocity * -gravityNormal;
-	acc = -gravityVector.Length();
+	dist = 0;
+	vel = 0;
+	acc = 0;
 
 	a = acc / 2.0f;
 	b = vel;
@@ -7578,44 +7557,13 @@ void idPlayer::BobCycle( const idVec3 &pushVelocity ) {
 	// calculate speed and cycle to be used for
 	// all cyclic walking effects
 	//
-	velocity = physicsObj.GetLinearVelocity() - pushVelocity;
 
-	if ( noclip ) {
+	if ( !noclip ) {
 		velocity.Zero ( );
 	}
-   
-	gravityDir = physicsObj.GetGravityNormal();
-	vel = velocity - ( velocity * gravityDir ) * gravityDir;
-	xyspeed = vel.LengthFast();
+
 	
-	if ( !physicsObj.HasGroundContacts() || influenceActive == INFLUENCE_LEVEL2 || ( gameLocal.isMultiplayer && spectating ) ) {
-		// airborne
-		bobCycle = 0;
-		bobFoot = 0;
-		bobfracsin = 0;
- 	} else if ( ( !usercmd.forwardmove && !usercmd.rightmove ) || ( xyspeed <= MIN_BOB_SPEED ) ) {
- 		// start at beginning of cycle again
- 		bobCycle = 0;
- 		bobFoot = 0;
- 		bobfracsin = 0;
-	} else {
-		if ( physicsObj.IsCrouching() ) {
-			bobmove = pm_crouchbob.GetFloat();
-			// ducked characters never play footsteps
-		} else {
-			// vary the bobbing based on the speed of the player
-			bobmove = pm_walkbob.GetFloat() * ( 1.0f - bobFrac ) + pm_runbob.GetFloat() * bobFrac;
-		}
-
-		// check for footstep / splash sounds
-		old = bobCycle;
-		bobCycle = (int)( old + bobmove * gameLocal.GetMSec() ) & 255;
-		bobFoot = ( bobCycle & 128 ) >> 7;
-		bobfracsin = idMath::Fabs( idMath::Sin( ( bobCycle & 127 ) / 127.0 * idMath::PI ) );
-	}
-
-	// calculate angles for view bobbing
-	viewBobAngles.Zero();
+	
 
 	// no view bob at all in MP while zoomed in
 	if ( IsZoomed() ) {
@@ -7668,34 +7616,8 @@ void idPlayer::BobCycle( const idVec3 &pushVelocity ) {
 		stepUpTime = gameLocal.time;
 	}
 
-	idVec3 gravity = physicsObj.GetGravityNormal();
+	idVec3 gravity = idVec3(0.0f, 0.0f, 0.0f);
 
-	// if the player stepped up recently
-	deltaTime = gameLocal.time - stepUpTime;
-	if ( deltaTime < STEPUP_TIME ) {
-		viewBob += gravity * ( stepUpDelta * ( STEPUP_TIME - deltaTime ) / STEPUP_TIME );
-	}
-
-	// add bob height after any movement smoothing
-	bob = bobfracsin * xyspeed * pm_bobup.GetFloat();
-	if ( bob > 6 ) {
-		bob = 6;
-	}
-// RAVEN BEGIN
-// abahr: added gravity
-	viewBob += bob * -gravityDir;
-// RAVEN END
-
-	// add fall height
-	delta = gameLocal.time - landTime;
-	if ( delta < LAND_DEFLECT_TIME ) {
-		f = delta / LAND_DEFLECT_TIME;
-		viewBob -= gravity * ( landChange * f );
-	} else if ( delta < LAND_DEFLECT_TIME + LAND_RETURN_TIME ) {
-		delta -= LAND_DEFLECT_TIME;
-		f = 1.0 - ( delta / LAND_RETURN_TIME );
-		viewBob -= gravity * ( landChange * f );
-	}	
 }
 
 /*
@@ -7764,12 +7686,12 @@ void idPlayer::UpdateViewAngles( void ) {
 
 	// clamp the pitch
 	if ( noclip ) {
-		if ( viewAngles.pitch > 89.0f ) {
+		if ( viewAngles.pitch > 0.1f ) {//was 89
 			// don't let the player look down more than 89 degrees while noclipping
-			viewAngles.pitch = 89.0f;
-		} else if ( viewAngles.pitch < -89.0f ) {
+			viewAngles.pitch = 0.1f;//was 89
+		} else if ( viewAngles.pitch < -0.1f ) {//was89
 			// don't let the player look up more than 89 degrees while noclipping
-			viewAngles.pitch = -89.0f;
+			viewAngles.pitch = -0.1f;//was89
 		}
 	} else {
 		if ( viewAngles.pitch > pm_maxviewpitch.GetFloat() ) {
@@ -7862,17 +7784,6 @@ void idPlayer::UpdateAir( void ) {
 	}
 }
 
-// RAVEN BEGIN
-// abahr
-/*
-==============
-idPlayer::UpdateGravity
-==============
-*/
-void idPlayer::UpdateGravity( void ) {
-	GetPhysics()->SetGravity( gameLocal.GetCurrentGravity(this) );
-}
-// RAVEN END
 
 /*
 ==============
@@ -8402,6 +8313,9 @@ void idPlayer::GenerateImpulseForBuyAttempt( const char* itemName ) {
 // RITUAL END
 
 
+
+
+
 /*
 ==============
 idPlayer::PerformImpulse
@@ -8693,7 +8607,7 @@ void idPlayer::AdjustSpeed( void ) {
 		speed = pm_spectatespeed.GetFloat();
 		bobFrac = 0.0f;
 	} else if ( noclip ) {
-		speed = pm_noclipspeed.GetFloat();
+		speed = 0;//pm_noclipspeed.GetFloat();
 		bobFrac = 0.0f;
  	} else if ( !physicsObj.OnLadder() && ( usercmd.buttons & BUTTON_RUN ) && ( usercmd.forwardmove || usercmd.rightmove ) && ( usercmd.upmove >= 0 ) ) {
 		bobFrac = 1.0f;
@@ -8962,9 +8876,9 @@ void idPlayer::Move( void ) {
 	idVec3 pushVelocity;
 
 	// save old origin and velocity for crashlanding
-	oldOrigin = physicsObj.GetOrigin();
-	oldVelocity = physicsObj.GetLinearVelocity();
-	pushVelocity = physicsObj.GetPushedLinearVelocity();
+	oldOrigin = idVec3(0, 0, 0);
+	oldVelocity = idVec3(0,0,0);
+	pushVelocity = idVec3(0, 0, 0);
 
 	// set physics variables
 	physicsObj.SetMaxStepHeight( pm_stepsize.GetFloat() );
@@ -9106,8 +9020,8 @@ void idPlayer::Move( void ) {
 
 	BobCycle( pushVelocity );
 
-	if( !noclip ) {
-		CrashLand( oldOrigin, oldVelocity );
+	if( noclip ) {
+		//CrashLand( oldOrigin, oldVelocity );
 	}
 }
 
@@ -9514,14 +9428,8 @@ void idPlayer::Think( void ) {
 	EvaluateControls();
 
 
-// RAVEN BEGIN
-// abahr
-	if( !noclip && !spectating ) {
-		UpdateGravity();
-	}
-// RAVEN END
 
-	Move();
+
 
 	if ( !g_stopTime.GetBool() ) {
  		if ( !noclip && !spectating && ( health > 0 ) && !IsHidden() ) {
@@ -10643,7 +10551,7 @@ void idPlayer::CalculateViewWeaponPos( idVec3 &origin, idMat3 &axis ) {
  		angles += GunTurningOffset();
  	}   
 
-	idVec3 gravity = physicsObj.GetGravityNormal();
+	idVec3 gravity = idVec3(0, 0, 0);
 
 // RAVEN BEGIN
 // abahr: when looking down, really large deflections cause back of weapons to show
@@ -10663,7 +10571,7 @@ void idPlayer::CalculateViewWeaponPos( idVec3 &origin, idMat3 &axis ) {
 
 	// speed sensitive idle drift
 	if ( !noclip ) {
-		scale = xyspeed * 0.5f + 40.0f;
+		scale = xyspeed * 0.0f + 0.0f;//.5, 40
 		fracsin = scale * idMath::Sin( MS2SEC( gameLocal.time ) ) * 0.01f;
 		angles.roll		+= fracsin;
 		angles.yaw		+= fracsin;
@@ -11850,7 +11758,7 @@ void idPlayer::LocalClientPredictionThink( void ) {
  	if ( !isLagged ) {
  		// don't allow client to move when lagged
 		predictedUpdated = false;
- 		Move();
+
 
 		// predict collisions with items
 		if ( !noclip && !spectating && ( health > 0 ) && !IsHidden() ) {
@@ -12034,11 +11942,7 @@ void idPlayer::NonLocalClientPredictionThink( void ) {
  		// don't allow client to move when lagged
 		predictedUpdated = false;
 		// NOTE: only running on new frames causes prediction errors even when the input does not change!
-		if ( gameLocal.isNewFrame ) {
- 			Move();
-		} else {
-			PredictionErrorDecay();
-		}
+	
  	}
 
 #if defined( _XENON ) || !LIMITED_PREDICTION

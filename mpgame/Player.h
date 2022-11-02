@@ -56,6 +56,7 @@ const int	ASYNC_PLAYER_INV_AMMO_BITS = 9;
 const int	ASYNC_PLAYER_INV_CLIP_BITS = -7;							// -7 bits to cover the range [-1, 60]
 // NOTE: protocol 69 used 6 bits, but that's only used for client -> server traffic, so doesn't affect backwards protocol replay compat
 const int	IMPULSE_NUMBER_OF_BITS		= 8;							// allows for 2<<X impulses
+const int   SPAWN_NUMBER_OF_BITS        = 8;
 
 #define MAX_CONCURRENT_VOICES	3
 
