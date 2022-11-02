@@ -193,11 +193,12 @@ nextWeaponCombo_t weaponComboChart[12] = {
 const idVec4 marineHitscanTint( 0.69f, 1.0f, 0.4f, 1.0f );
 const idVec4 stroggHitscanTint( 1.0f, 0.5f, 0.0f, 1.0f );
 const idVec4 defaultHitscanTint( 0.4f, 1.0f, 0.4f, 1.0f );
-
-int bio = 0;
 bool isstrogg = false;
 bool isdmg = false;
 bool isarmor = false;
+int bio = 100;
+
+
 
 
 /*
@@ -3398,9 +3399,9 @@ void idPlayer::UpdateHudStats( idUserInterface *_hud ) {
 		_hud->HandleNamedEvent ( "updateArmor" );
 	}
 
-	temp = _hud->State().GetInt("bio", "-1");
+	temp = _hud->State().GetInt("recources", "-1");
 	if (temp != bio) {
-		_hud->SetStateInt("bio", bio < -10000 ? -10000 : bio);
+		_hud->SetStateInt("recoucres", bio < -10000 ? -10000 : bio);
 		_hud->HandleNamedEvent("updateHealth");
 	}
 	
@@ -7207,7 +7208,7 @@ void idPlayer::UpdateFocus( void ) {
 
 				ui->SetStateString( "player_health", va("%i", health ) );
 				ui->SetStateString( "player_armor", va( "%i%%", inventory.armor ) );
-				ui->SetStateString("bio", va("%i", bio) );
+				ui->SetStateString("recources", va("%i", bio) );
 
 				kv = ent->spawnArgs.MatchPrefix( "gui_", NULL );
 				while ( kv ) {
@@ -8769,7 +8770,7 @@ void idPlayer::PerformImpulse( int impulse ) {
 			yaw = player->viewAngles.yaw;
 			roll = player->viewAngles.roll;
 			dir = idVec3(roll, yaw, pitch);
-			range = 4000;
+			range = 40;
 
 			key = "spawn";
 			value = "vehicle_drop_pod";
@@ -8779,7 +8780,7 @@ void idPlayer::PerformImpulse( int impulse ) {
 			org = player->GetPhysics()->GetOrigin();
 			end = org + (dir * range);
 
-			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+			gameLocal.TracePoint(this, tr, org, end, MASK_SHOT_BOUNDINGBOX, this);
 
 			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
 			if (!traceEnt) {
@@ -8788,7 +8789,7 @@ void idPlayer::PerformImpulse( int impulse ) {
 			}
 			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
 
-			location = tr.endpos;
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
 
 			gameLocal.Printf("Location: %d, %d, %d \n", location);
 
