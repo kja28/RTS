@@ -39,6 +39,7 @@ const int BUTTON_STRAFE			= BIT(8);
 // RAVEN END
 
 
+
 // usercmd_t->impulse commands
 const int IMPULSE_0				= 0;			// weap 0
 const int IMPULSE_1				= 1;			// weap 1
@@ -71,6 +72,30 @@ const int IMPULSE_27			= 27;			// <unused>
 const int IMPULSE_28			= 28;			// vote yes
 const int IMPULSE_29			= 29;			// vote no
 const int IMPULSE_40			= 40;			// repeast last radio chatter
+const int IMPULSE_41            = 41;           // create unit 1
+const int IMPULSE_42            = 42;           // create unit 2
+const int IMPULSE_43            = 43;           // create unit 3
+const int IMPULSE_44            = 44;           // create unit 4
+const int IMPULSE_45            = 45;           // create unit 5
+const int IMPULSE_46            = 46;           // create building 1
+const int IMPULSE_47            = 47;           // create building 2
+const int IMPULSE_48            = 48;           // create building 3
+const int IMPULSE_49            = 49;           // create building 4
+const int IMPULSE_60            = 60;           // create building 5
+const int IMPULSE_61 = 61;           // create Monster unit 1
+const int IMPULSE_62 = 62;           // create Monster unit 2
+const int IMPULSE_63 = 63;           // create Monster unit 3
+const int IMPULSE_53 = 53;           // create Monster unit 4
+const int IMPULSE_54 = 54;           // create Monster unit 5
+const int IMPULSE_55 = 55;           // create Monster building 1
+const int IMPULSE_56 = 56;           // create Monster building 2
+const int IMPULSE_57 = 57;           // create Monster building 3
+const int IMPULSE_58 = 58;           // create Monster building 4
+const int IMPULSE_59 = 59;           // create Monster building 5
+const int IMPULSE_31 = 31;           // upgrade damage
+const int IMPULSE_32 = 32;           // upgrade armor
+
+
 
 // RAVEN BEGIN
 // bdube: added flashlight
