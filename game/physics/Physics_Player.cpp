@@ -7,23 +7,23 @@ CLASS_DECLARATION( idPhysics_Actor, idPhysics_Player )
 END_CLASS
 
 // movement parameters
-const float PM_STOPSPEED		= 100.0f;
-const float PM_SWIMSCALE		= 0.5f;
-const float PM_LADDERSPEED		= 100.0f;
-const float PM_STEPSCALE		= 1.0f;
+const float PM_STOPSPEED		= 0.0f;
+const float PM_SWIMSCALE		= 0.0f;
+const float PM_LADDERSPEED		= 0.0f;
+const float PM_STEPSCALE		= 0.0f;
 
-const float PM_ACCELERATE_SP	= 10.0f;
-const float PM_AIRACCELERATE_SP	= 1.0f;
-const float PM_ACCELERATE_MP	= 15.0f;
-const float PM_AIRACCELERATE_MP	= 1.18f;
-const float PM_WATERACCELERATE	= 4.0f;
-const float PM_FLYACCELERATE	= 8.0f;
+const float PM_ACCELERATE_SP	= 0.0f;
+const float PM_AIRACCELERATE_SP	= 0.0f;
+const float PM_ACCELERATE_MP	= 0.0f;
+const float PM_AIRACCELERATE_MP	= 0.0f;
+const float PM_WATERACCELERATE	= 0.0f;
+const float PM_FLYACCELERATE	= 0.0f;
 
-const float PM_FRICTION			= 6.0f;
+const float PM_FRICTION			= 0.0f;
 const float PM_AIRFRICTION		= 0.0f;
-const float PM_WATERFRICTION	= 2.0f;
-const float PM_FLYFRICTION		= 3.0f;
-const float PM_NOCLIPFRICTION	= 12.0f;
+const float PM_WATERFRICTION	= 0.0f;
+const float PM_FLYFRICTION		= 0.0f;
+const float PM_NOCLIPFRICTION	= 0.0f;
 // RAVEN BEGIN
 // bdube: sliding
 const float PM_SLIDEFRICTION    = 0.5f;
@@ -111,17 +111,17 @@ void idPhysics_Player::Accelerate( const idVec3 &wishdir, const float wishspeed,
 	// q2 style
 	float addspeed, accelspeed, currentspeed;
 
-	currentspeed = current.velocity * wishdir;
-	addspeed = wishspeed - currentspeed;
+	currentspeed = 0;
+	addspeed = 0;
 	if (addspeed <= 0) {
 		return;
 	}
 // RAVEN BEGIN
 // nmckenzie: added ability to try alternate accelerations.
 	if ( pm_acceloverride.GetFloat() > 0.0f ) {
-		accelspeed = pm_acceloverride.GetFloat() * frametime * wishspeed;
+		accelspeed = 0;
 	} else {
-		accelspeed = accel * frametime * wishspeed;
+		accelspeed = 0;
 	}
 // RAVEN END
 	if ( accelspeed > addspeed ) {
@@ -170,11 +170,11 @@ bool idPhysics_Player::SlideMove( bool gravity, bool stepUp, bool stepDown, bool
 
 	numbumps = 4;
 
-	primal_velocity = current.velocity;
+	primal_velocity = idVec3 (0,0,0);
 
 	if ( gravity ) {
-		endVelocity = current.velocity + gravityVector * frametime;
-		current.velocity = ( current.velocity + endVelocity ) * 0.5f;
+		endVelocity = idVec3 (0,0,0);
+		current.velocity = idVec3 (0,0,0);
 		primal_velocity = endVelocity;
 		if ( groundPlane ) {
 			// slide along the ground plane
@@ -182,7 +182,7 @@ bool idPhysics_Player::SlideMove( bool gravity, bool stepUp, bool stepDown, bool
 		}
 	}
 	else {
-		endVelocity = current.velocity;
+		endVelocity = idVec3 (0, 0, 0);
 	}
 
 	time_left = frametime;

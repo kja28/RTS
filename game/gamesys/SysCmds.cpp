@@ -230,6 +230,19 @@ void Cmd_Script_f( const idCmdArgs &args ) {
 	}
 }
 
+static void Cmd_Locate_f(const idCmdArgs& args)
+{
+	idPlayer* player = NULL; 
+	player = gameLocal.GetLocalPlayer();
+	if (!player)
+	{
+		return;
+	}
+	idVec3 origin = player->GetPhysics()->GetOrigin();
+	gameLocal.Printf("Location: %f, %f, %f)\n\n", origin[0], origin[1], origin[2]);
+}
+
+
 // RAVEN BEGIN
 // jscott: exports for tracking memory
 /*
@@ -3092,6 +3105,7 @@ void idGameLocal::InitConsoleCommands( void ) {
 	cmdSystem->AddCommand( "flashlight",			Cmd_Flashlight_f,			CMD_FL_GAME|CMD_FL_CHEAT,	"toggle actor's flashlight", idGameLocal::ArgCompletion_AIName );
 	
 	cmdSystem->AddCommand( "shuffleTeams",			Cmd_ShuffleTeams_f,			CMD_FL_GAME,				"shuffle teams" );
+	cmdSystem->AddCommand("Locate", Cmd_Locate_f, CMD_FL_GAME, "find location");
 // RAVEN BEGIN
 // bdube: not using id effect system
 //	cmdSystem->AddCommand( "testFx",				Cmd_TestFx_f,				CMD_FL_GAME|CMD_FL_CHEAT,	"tests an FX system", idCmdSystem::ArgCompletion_Decl<DECL_FX> );
