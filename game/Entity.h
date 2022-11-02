@@ -136,6 +136,8 @@ public:
 
 	int						health;					// FIXME: do all objects really need health?
 
+
+
 // RAVEN BEGIN
 // ddynerman: optional pre-prediction
 	int						predictTime;
