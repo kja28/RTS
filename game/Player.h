@@ -56,6 +56,9 @@ const int	ASYNC_PLAYER_INV_CLIP_BITS = -7;							// -7 bits to cover the range [
 const int	ASYNC_PLAYER_INV_WPMOD_BITS = 3;							// 3 bits (max of 3 mods per gun)
 // NOTE: protocol 69 used 6 bits, but that's only used for client -> server traffic, so doesn't affect backwards protocol replay compat
 const int	IMPULSE_NUMBER_OF_BITS		= 8;							// allows for 2<<X impulses
+const int	SPAWN_NUMBER_OF_BITS        = 8;
+
+
 
 #define MAX_CONCURRENT_VOICES	3
 
@@ -272,6 +275,7 @@ public:
 
  	enum {
  		EVENT_IMPULSE = idEntity::EVENT_MAXEVENTS,
+		EVENT_CREATE_UNIT,
  		EVENT_EXIT_TELEPORTER,
  		EVENT_ABORT_TELEPORTER,
  		EVENT_POWERUP,

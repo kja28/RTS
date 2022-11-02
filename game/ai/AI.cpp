@@ -18,6 +18,7 @@ AI.cpp
 #include "../spawner.h"
 #include "AI_Tactical.h"
 
+
 const char* aiTalkMessageString [ ] = {
 	"None",
 	"primary",
@@ -26,6 +27,13 @@ const char* aiTalkMessageString [ ] = {
 };
 
 static const float AI_SIGHTDELAYSCALE	= 5000.0f;			// Full sight delay at 5 seconds or more of not seeing enemy
+int dmgmult = 1;
+int dmgredu = 1;
+
+extern bool isdmg;
+extern bool isarmor;
+
+
 
 
 /*
@@ -1511,16 +1519,26 @@ int idAI::ReactionTo( const idEntity *ent ) {
 	return ATTACK_IGNORE;
 }
 
+
+
 /*
 =====================
 idAI::AdjustHealthByDamage
 =====================
 */
 void idAI::AdjustHealthByDamage	( int damage ) {
+	if (isdmg)
+	{
+		dmgmult = 3;
+	}
+	if (isarmor)
+	{
+		dmgredu = 3;
+	}
 	if ( aifl.undying ) {
 		return;
 	}	
-	idActor::AdjustHealthByDamage ( damage );
+	idActor::AdjustHealthByDamage ( damage * dmgmult / dmgredu);
 
 	if ( g_perfTest_aiUndying.GetBool() && health <= 0 ) {
 		//so we still take pain!
@@ -1534,7 +1552,15 @@ idAI::Pain
 =====================
 */
 bool idAI::Pain( idEntity *inflictor, idEntity *attacker, int damage, const idVec3 &dir, int location ) {
-	aifl.pain   = idActor::Pain( inflictor, attacker, damage, dir, location );
+	if (isdmg)
+	{
+		dmgmult = 3;
+	}
+	if (isarmor)
+	{
+		dmgredu = 3;
+	}
+	aifl.pain   = idActor::Pain( inflictor, attacker, damage * dmgmult / dmgredu, dir, location );
 	aifl.damage = true;
 
 	// force a blink
@@ -1555,7 +1581,7 @@ bool idAI::Pain( idEntity *inflictor, idEntity *attacker, int damage, const idVe
 	// ignore damage from self
 	if ( attacker != this ) {
 		// React to taking pain
-		ReactToPain ( attacker, damage );
+		ReactToPain ( attacker, damage * dmgmult / dmgredu );
 
 		pain.takenThisFrame += damage;
 		pain.lastTakenTime = gameLocal.time;
@@ -1610,6 +1636,14 @@ idAI::Killed
 =====================
 */
 void idAI::Killed( idEntity *inflictor, idEntity *attacker, int damage, const idVec3 &dir, int location ) {
+	if (isdmg)
+	{
+		dmgmult = 3;
+	}
+	if (isarmor)
+	{
+		dmgredu = 3;
+	}
 	idAngles			ang;
 	const char*			modelDeath;
 	const idKeyValue*	kv;

@@ -18,6 +18,7 @@
 #include "Healing_Station.h"
 #include "ai/AI_Medic.h"
 
+
 // RAVEN BEGIN
 // nrausch: support for turning the weapon change ui on and off
 #ifdef _XENON
@@ -193,6 +194,12 @@ const idVec4 marineHitscanTint( 0.69f, 1.0f, 0.4f, 1.0f );
 const idVec4 stroggHitscanTint( 1.0f, 0.5f, 0.0f, 1.0f );
 const idVec4 defaultHitscanTint( 0.4f, 1.0f, 0.4f, 1.0f );
 
+int bio = 0;
+bool isstrogg = false;
+bool isdmg = false;
+bool isarmor = false;
+
+
 /*
 ==============
 idInventory::Clear
@@ -219,7 +226,6 @@ void idInventory::Clear( void ) {
 	items.DeleteContents( true );
 	pdas.Clear();
 	videos.Clear();
-
 	levelTriggers.Clear();
 
 	nextItemPickup = 0;
@@ -2762,8 +2768,8 @@ Chooses a spawn location and spawns the player
 void idPlayer::SpawnFromSpawnSpot( void ) {
 	idVec3		spawn_origin;
 	idAngles	spawn_angles;
-	spawn_origin = idVec3(11609.730469f, -7961.773926f, 500.0f);
-	spawn_angles = idAngles(0.0f, 0.0f, -20.0f);
+	spawn_origin = idVec3(11609.730469f, -7961.773926f, 400.0f);
+	spawn_angles = idAngles(0.0f, .0f, -180.0f);
 	
 
 	SpawnToPoint( spawn_origin, spawn_angles );
@@ -3390,6 +3396,12 @@ void idPlayer::UpdateHudStats( idUserInterface *_hud ) {
 		_hud->SetStateInt ( "player_armor", inventory.armor );
 		_hud->SetStateFloat	( "player_armorpct", idMath::ClampFloat ( 0.0f, 1.0f, (float)inventory.armor / (float)inventory.maxarmor ) );
 		_hud->HandleNamedEvent ( "updateArmor" );
+	}
+
+	temp = _hud->State().GetInt("bio", "-1");
+	if (temp != bio) {
+		_hud->SetStateInt("bio", bio < -10000 ? -10000 : bio);
+		_hud->HandleNamedEvent("updateHealth");
 	}
 	
 	// Boss bar
@@ -5697,6 +5709,7 @@ void idPlayer::SelectWeapon( const char *weapon_name ) {
 	Event_SelectWeapon( weapon_name );
 }
 
+
 /*
 ===============
 idPlayer::SelectWeapon
@@ -7194,6 +7207,7 @@ void idPlayer::UpdateFocus( void ) {
 
 				ui->SetStateString( "player_health", va("%i", health ) );
 				ui->SetStateString( "player_armor", va( "%i%%", inventory.armor ) );
+				ui->SetStateString("bio", va("%i", bio) );
 
 				kv = ent->spawnArgs.MatchPrefix( "gui_", NULL );
 				while ( kv ) {
@@ -8409,6 +8423,10 @@ void idPlayer::GenerateImpulseForBuyAttempt( const char* itemName ) {
 // RITUAL END
 
 
+
+
+
+
 /*
 ==============
 idPlayer::PerformImpulse
@@ -8438,6 +8456,7 @@ void idPlayer::PerformImpulse( int impulse ) {
 		msg.WriteBits( impulse, IMPULSE_NUMBER_OF_BITS );
 		ClientSendEvent( EVENT_IMPULSE, &msg );
 	}
+
 
 	if ( impulse >= IMPULSE_0 && impulse <= IMPULSE_12 ) {
 		SelectWeapon( impulse, false );
@@ -8549,6 +8568,976 @@ void idPlayer::PerformImpulse( int impulse ) {
    		}
 		case IMPULSE_40: {
 			idFuncRadioChatter::RepeatLast();
+			break;
+		}
+		case IMPULSE_41: {;
+			const char* key2, * value2;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer*   player2;
+			idDict		dict2;
+
+			player2 = gameLocal.GetLocalPlayer();
+			if (!player2 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player2->viewAngles.yaw;
+
+			key2 = "spawn";
+			value2 = "char_marine";
+			dict2.Set("classname", value2);
+			dict2.Set("angle", va("%f", yaw + 180));
+
+			org = player2->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict2.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict2, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_42: {
+
+			const char* key2, * value2;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer* player2;
+			idDict		dict2;
+
+			player2 = gameLocal.GetLocalPlayer();
+			if (!player2 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player2->viewAngles.yaw;
+
+			key2 = "spawn";
+			value2 = "char_marine_medic";
+			dict2.Set("classname", value2);
+			dict2.Set("angle", va("%f", yaw + 180));
+
+			org = player2->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict2.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict2, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+			
+		}
+		case IMPULSE_43: {
+			const char* key3, * value3;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer* player3;
+			idDict		dict3;
+
+			player3 = gameLocal.GetLocalPlayer();
+			if (!player3 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player3->viewAngles.yaw;
+
+			key3 = "spawn";
+			value3 = "char_marine_shotgun";
+			dict3.Set("classname", value3);
+			dict3.Set("angle", va("%f", yaw + 180));
+
+			org = player3->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict3.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict3, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+			
+		}
+		case IMPULSE_44: {
+			const char* key4, * value4;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer* player4;
+			idDict		dict4;
+
+			player4 = gameLocal.GetLocalPlayer();
+			if (!player4 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player4->viewAngles.yaw;
+
+			key4 = "spawn";
+			value4 = "char_marine_hyperblaster";
+			dict4.Set("classname", value4);
+			dict4.Set("angle", va("%f", yaw + 180));
+
+			org = player4->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict4.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict4, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+			
+		}
+		case IMPULSE_45: {
+			const char* key5, * value5;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer* player5;
+			idDict		dict5;
+
+			player5 = gameLocal.GetLocalPlayer();
+			if (!player5 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player5->viewAngles.yaw;
+
+			key5 = "spawn";
+			value5 = "vehicle_walker";
+			dict5.Set("classname", value5);
+			dict5.Set("angle", va("%f", yaw + 180));
+
+			org = player5->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict5.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict5, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_46: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "vehicle_drop_pod";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = tr.endpos;
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_47: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "vehicle_flatbed_base";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_48: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "env_autopsytable";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+
+		}
+		case IMPULSE_49: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "env_dropship";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+
+		}
+		case IMPULSE_60: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "env_elevator";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_61: {;
+			const char* key2, * value2;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer*   player2;
+			idDict		dict2;
+
+			player2 = gameLocal.GetLocalPlayer();
+			if (!player2 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player2->viewAngles.yaw;
+
+			key2 = "spawn";
+			value2 = "monster_strogg_marine_mgun";
+			dict2.Set("classname", value2);
+			dict2.Set("angle", va("%f", yaw + 180));
+
+			org = player2->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict2.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict2, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_62: {
+
+			const char* key2, * value2;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer* player2;
+			idDict		dict2;
+
+			player2 = gameLocal.GetLocalPlayer();
+			if (!player2 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player2->viewAngles.yaw;
+
+			key2 = "spawn";
+			value2 = "monster_grunt";
+			dict2.Set("classname", value2);
+			dict2.Set("angle", va("%f", yaw + 180));
+
+			org = player2->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict2.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict2, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+			
+		}
+		case IMPULSE_63: {
+			const char* key3, * value3;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer* player3;
+			idDict		dict3;
+
+			player3 = gameLocal.GetLocalPlayer();
+			if (!player3 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player3->viewAngles.yaw;
+
+			key3 = "spawn";
+			value3 = "monster_berserker";
+			dict3.Set("classname", value3);
+			dict3.Set("angle", va("%f", yaw + 180));
+
+			org = player3->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict3.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict3, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+			
+		}
+		case IMPULSE_53: {
+			const char* key4, * value4;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer* player4;
+			idDict		dict4;
+
+			player4 = gameLocal.GetLocalPlayer();
+			if (!player4 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player4->viewAngles.yaw;
+
+			key4 = "spawn";
+			value4 = "monster_gunner";
+			dict4.Set("classname", value4);
+			dict4.Set("angle", va("%f", yaw + 180));
+
+			org = player4->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict4.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict4, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+			
+		}
+		case IMPULSE_54: {
+			const char* key5, * value5;
+			int			i;
+			float		yaw;
+			idVec3		org;
+			idPlayer* player5;
+			idDict		dict5;
+
+			player5 = gameLocal.GetLocalPlayer();
+			if (!player5 || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			yaw = player5->viewAngles.yaw;
+
+			key5 = "spawn";
+			value5 = "monster_network_guardian";
+			dict5.Set("classname", value5);
+			dict5.Set("angle", va("%f", yaw + 180));
+
+			org = player5->GetPhysics()->GetOrigin() + idAngles(0, yaw, 0).ToForward() * 80 + idVec3(0, 0, 1);
+			dict5.Set("origin", org.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict5, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_55: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "env_battery";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_56: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "vehicle_bodytable";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_57: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "env_brainstalk";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+
+		}
+		case IMPULSE_58: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "env_crucified";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+
+		}
+		case IMPULSE_59: {
+			const char* key, * value;
+			int			i;
+			float		yaw;
+			float       roll;
+			float       pitch;
+			idVec3		org;
+			idDict      dict;
+			idPlayer* player;
+			idEntity* traceEnt;
+			trace_t     tr;
+			idVec3      end;
+			idVec3      dir;
+			idVec3      location;
+			float       range;
+
+			player = gameLocal.GetLocalPlayer();
+			if (!player || !gameLocal.CheatsOk(false)) {
+				return;
+			}
+
+			pitch = player->viewAngles.pitch;
+			yaw = player->viewAngles.yaw;
+			roll = player->viewAngles.roll;
+			dir = idVec3(roll, yaw, pitch);
+			range = 4000;
+
+			key = "spawn";
+			value = "env_tetranode";
+			dict.Set("classname", value);
+			dict.Set("angle", va("%f", yaw + 180));
+
+			org = player->GetPhysics()->GetOrigin();
+			end = org + (dir * range);
+
+			gameLocal.TracePoint(this, tr, org, end, MASK_OPAQUE, this);
+
+			traceEnt = gameLocal.FindEntity(tr.c.entityNum);
+			if (!traceEnt) {
+				gameLocal.Printf(" %s", "Didn't work");
+				break;
+			}
+			gameLocal.Printf("Entity: %s \n", traceEnt->name.c_str());
+
+			location = traceEnt->GetPhysics()->GetOrigin() + idVec3(11609.730469, -7691.773926, 128.250000);
+
+			gameLocal.Printf("Location: %d, %d, %d \n", location);
+
+			dict.Set("origin", location.ToString());
+
+
+			// RAVEN BEGIN
+			// kfuller: want to know the name of the entity I spawned
+			idEntity* newEnt = NULL;
+			gameLocal.SpawnEntityDef(dict, &newEnt);
+
+			if (newEnt) {
+				gameLocal.Printf("spawned entity '%s'\n", newEnt->name.c_str());
+			}
+			break;
+		}
+		case IMPULSE_31: {
+			isdmg = true;
+			break;
+		}
+		case IMPULSE_32: {
+			isarmor = true;
 			break;
 		}
 
